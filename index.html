@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSync - Premium Personal Finance Manager</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!--SweetAlert2-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+</head>
+<body class="dark-theme accent-indigo">
+
+    <div id="app-container">
+
+        <!-- ==========================================
+             SIDEBAR NAVIGATION
+             ========================================== -->
+        <aside id="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-wallet"></i>
+                <span>FinSync</span>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active" data-view="dashboard">
+                    <a href="#"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+                </li>
+                <li class="sidebar-item" data-view="expenses">
+                    <a href="#"><i class="fas fa-receipt"></i><span>Daily Expenses</span></a>
+                </li>
+                <li class="sidebar-item" data-view="bills">
+                    <a href="#"><i class="fas fa-file-invoice-dollar"></i><span>Monthly Bills</span></a>
+                </li>
+                <li class="sidebar-item" data-view="liabilities">
+                    <a href="#"><i class="fas fa-credit-card"></i><span>Credit & Loans</span></a>
+                </li>
+                <li class="sidebar-item" data-view="next-month">
+                    <a href="#"><i class="fas fa-calendar-alt"></i><span>Next Month</span></a>
+                </li>
+                <li class="sidebar-item" data-view="reports">
+                    <a href="#"><i class="fas fa-chart-bar"></i><span>Reports & Stats</span></a>
+                </li>
+                <li class="sidebar-item" data-view="calendar">
+                    <a href="#"><i class="fas fa-calendar-days"></i><span>Calendar</span></a>
+                </li>
+                <li class="sidebar-item" data-view="settings">
+                    <a href="#"><i class="fas fa-cog"></i><span>Settings</span></a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-card">
+                    <div class="avatar" id="sidebar-avatar">VS</div>
+                    <div class="profile-info">
+                        <h4 id="sidebar-username">Guest User</h4>
+                        <p>Finance Planner</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==========================================
+             MAIN CONTENT SHELL
+             ========================================== -->
+        <main id="main-content">
+
+            <!-- HEADER NAVBAR -->
+            <header>
+                <div class="header-left">
+                    <button id="sidebar-toggle" class="sidebar-toggle-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="view-title" id="header-view-title">Dashboard</h1>
+                </div>
+
+                <div class="header-right">
+                    <!-- Global Search -->
+                    <div class="global-search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="global-search" placeholder="Search bills, expenses, cards..." autocomplete="off">
+                        <!-- Search Results Dropdown -->
+                        <div class="search-results-dropdown" id="search-results-dropdown" style="display: none;"></div>
+                    </div>
+
+                    <div class="topbar-tools">
+                        <!-- Theme Toggle -->
+                        <button class="tool-btn" id="theme-toggle-btn" title="Toggle Theme">
+                            <i class="fas fa-moon" id="theme-toggle-icon"></i>
+                        </button>
+
+                        <!-- Notification Bell -->
+                        <!--<button class="tool-btn" id="notification-bell" title="Notifications">
+                          <i class="fas fa-bell"></i>
+                          <span class="badge-dot" id="notif-badge" style="display: none;"></span>-->
+                        <!-- Notification Dropdown -->
+                        <!--<div class="notification-dropdown" id="notif-dropdown">
+                          <div class="notification-dropdown-header">
+                            <h4 style="font-weight: 700; font-size: 0.9rem;">Alerts & Reminders</h4>
+                            <button id="clear-notifications" style="background:none; border:none; color:var(--accent-color); font-size: 0.75rem; cursor:pointer; font-weight:600;">Dismiss All</button>
+                          </div>
+                          <div id="notifications-list">-->
+                        <!-- Notifications injected here -->
+                        <!--<div class="notification-item">
+                                <i class="fas fa-info-circle text-info" style="color:var(--color-info);"></i>
+                                <div class="notification-item-text">
+                                  <p>Welcome to FinSync! Customize settings to begin.</p>
+                                  <span>Just now</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </button>-->
+                    </div>
+                </div>
+            </header>
+
+            <!-- ==========================================
+                 1. DASHBOARD VIEW
+                 ========================================== -->
+            <section id="dashboard-view" class="view-section active">
+                <!-- Welcome banner -->
+                <div class="welcome-banner">
+                    <div>
+                        <h2 id="welcome-message">Hello, User!</h2>
+                        <p>Here is your current financial status for this month. Stay on budget!</p>
+                    </div>
+                </div>
+
+                <!-- Summary Cards Grid -->
+                <div class="stat-cards-grid">
+                    <!-- Total Expenses -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Total Monthly Expenses</span>
+                            <div class="stat-card-icon bg-danger-light"><i class="fas fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-monthly-expenses">$0.00</div>
+                        <div class="stat-card-progress"><div class="stat-card-progress-bar" id="budget-progress-bar" style="width: 0%;"></div></div>
+                        <span class="stat-card-desc" id="budget-progress-label">0% of monthly budget</span>
+                    </div>
+
+                    <!-- Daily Expenses -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Today's Expenses</span>
+                            <div class="stat-card-icon bg-warning-light"><i class="fas fa-calendar-day"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-daily-expenses">$0.00</div>
+                        <div class="stat-card-progress"><div class="stat-card-progress-bar" id="daily-limit-bar" style="width: 0%; background-color: var(--color-warning);"></div></div>
+                        <span class="stat-card-desc" id="daily-limit-label">0% of daily limit</span>
+                    </div>
+
+                    <!-- Credit Outstanding -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Credit Cards Due</span>
+                            <div class="stat-card-icon bg-danger-light"><i class="fas fa-credit-card"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-credit-outstanding">$0.00</div>
+                        <span class="stat-card-desc" id="card-credit-count">0 credit cards outstanding</span>
+                    </div>
+
+                    <!-- Loans Outstanding -->
+                    <!--<div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Loan Outstanding</span>
+            <div class="stat-card-icon bg-info-light"><i class="fas fa-hand-holding-dollar"></i></div>
+          </div>
+          <div class="stat-card-value" id="card-loan-outstanding">$0.00</div>
+          <span class="stat-card-desc" id="card-loan-count">0 loans active</span>
+        </div>-->
+                </div>
+
+                <div class="stat-cards-grid">
+                    <!-- Paid Amount -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Amount Paid</span>
+                            <div class="stat-card-icon bg-success-light"><i class="fas fa-check-double"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-paid-amount" style="color:var(--color-success);">$0.00</div>
+                        <span class="stat-card-desc">Cleared bills & liabilities</span>
+                    </div>
+
+                    <!-- Pending Amount -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Remaining Bills Pending</span>
+                            <div class="stat-card-icon bg-warning-light"><i class="fas fa-clock"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-pending-amount" style="color:var(--color-warning);">$0.00</div>
+                        <span class="stat-card-desc" id="card-pending-count">0 unpaid items this month</span>
+                    </div>
+
+                    <!-- Savings Progress -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Net Savings</span>
+                            <div class="stat-card-icon bg-success-light"><i class="fas fa-piggy-bank"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-savings" style="color:var(--color-success);">$0.00</div>
+                        <span class="stat-card-desc" id="savings-ratio-label">Income vs. Expense</span>
+                    </div>
+
+                    <!-- Next Month Upcoming -->
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Next Month Due</span>
+                            <div class="stat-card-icon bg-info-light"><i class="fas fa-calendar-check"></i></div>
+                        </div>
+                        <div class="stat-card-value" id="card-next-month-payments">$0.00</div>
+                        <span class="stat-card-desc" id="card-next-month-count">0 upcoming items</span>
+                    </div>
+                </div>
+
+                <!-- Dashboard panel splits -->
+                <div class="dashboard-grid">
+                    <!-- Left side: Recent Transactions & Income Tabs -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header" style="margin-bottom: 16px;">
+                            <div style="display: flex; gap: 16px;">
+                                <h3 class="dash-tab active" data-tab="expenses" style="font-weight: 700; font-size:1.1rem; cursor:pointer; color:var(--text-primary); border-bottom: 2px solid var(--accent-color); padding-bottom: 4px; transition: all var(--transition-fast);">Recent Expenses</h3>
+                                <h3 class="dash-tab" data-tab="income" style="font-weight: 700; font-size:1.1rem; cursor:pointer; color:var(--text-secondary); border-bottom: 2px solid transparent; padding-bottom: 4px; transition: all var(--transition-fast);">Recent Income</h3>
+                            </div>
+                            <button class="btn btn-secondary" id="dash-tab-view-all" onclick="window.script.changeView('expenses')" style="padding: 6px 12px; font-size: 0.8rem;">View All</button>
+                        </div>
+
+                        <!-- Expenses Tab Content -->
+                        <div class="dash-tab-content active" id="dash-tab-expenses-content">
+                            <div class="table-wrapper">
+                                <table id="dashboard-expenses-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Injected via script -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Income Tab Content -->
+                        <div class="dash-tab-content" id="dash-tab-income-content" style="display: none;">
+                            <div class="table-wrapper">
+                                <table id="dashboard-income-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Source</th>
+                                            <th>Amount</th>
+                                            <th style="width: 100px; text-align: center;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Injected via script -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right side: Savings Goals & Favorite Bills -->
+                    <div class="dashboard-panel" style="display:flex; flex-direction:column; gap:20px;">
+                        <div>
+                            <div class="panel-header" style="margin-bottom:12px;">
+                                <h3 style="font-weight:700; font-size: 1rem;">Goal Progress</h3>
+                                <button class="btn btn-secondary" id="dashboard-add-goal-btn" style="padding: 4px 8px; font-size: 0.75rem;"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="dashboard-goals-list" style="display:flex; flex-direction:column; gap:12px;">
+                                <!-- Injected via script -->
+                            </div>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border-color);">
+
+                        <div>
+                            <div class="panel-header" style="margin-bottom:12px;">
+                                <h3 style="font-weight:700; font-size: 1rem;">Favorite Bills</h3>
+                            </div>
+                            <div id="dashboard-favorites-list" style="display:flex; flex-direction:column; gap:8px;">
+                                <!-- Injected via script -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:center; color:#888; font-size:14px;">
+                    <p id="copyright"></p>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 2. DAILY EXPENSES VIEW
+                 ========================================== -->
+            <section id="expenses-view" class="view-section">
+                <!-- Expense filter & metrics card -->
+                <div class="stat-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:20px;">
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Today's Total</span>
+                        <div class="stat-card-value" id="expenses-today-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Weekly Total</span>
+                        <div class="stat-card-value" id="expenses-weekly-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Monthly Total</span>
+                        <div class="stat-card-value" id="expenses-monthly-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Filter bar -->
+                <div class="filter-bar">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Search description/tags</label>
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="expense-filter-search" class="form-control" placeholder="Search...">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Category</label>
+                        <select id="expense-filter-category" class="form-control">
+                            <option value="">All Categories</option>
+                            <!-- Filled via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Start Date</label>
+                        <input type="date" id="expense-filter-start-date" class="form-control">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>End Date</label>
+                        <input type="date" id="expense-filter-end-date" class="form-control">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-secondary" id="expense-filter-reset" style="padding: 10px 14px;"><i class="fas fa-undo"></i></button>
+                        <button class="btn btn-primary" id="expense-add-btn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                </div>
+
+                <!-- Expenses List Card -->
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <h3>Daily Expenditures Logs</h3>
+                        </div>
+                        <div class="table-actions">
+                            <button class="btn btn-secondary" id="expense-export-csv" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fas fa-file-csv"></i> CSV</button>
+                            <button class="btn btn-secondary" id="expense-export-excel" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fas fa-file-excel"></i> Excel</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="expenses-main-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Tags</th>
+                                    <th>Amount</th>
+                                    <th style="width: 100px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-table-body">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 3. MONTHLY BILLS VIEW
+                 ========================================== -->
+            <section id="bills-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <h2 style="font-size:1.6rem; font-weight:700;">Monthly Recurring Bills</h2>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Keep track of recurring services and bills. Marked payments auto-add to Daily Expenses.</p>
+                    </div>
+                    <button class="btn btn-primary" id="bill-add-btn"><i class="fas fa-plus"></i> Add Monthly Bill</button>
+                </div>
+
+                <!-- Pending Bills Table -->
+                <div class="table-card" style="margin-bottom:28px;">
+                    <div class="table-header" style="background-color:rgba(245,158,11,0.03);">
+                        <div class="table-title">
+                            <h3 style="color:var(--text-primary);"><i class="fas fa-hourglass-half" style="margin-right:8px; color:var(--color-warning);"></i>Pending Bills</h3>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="bills-pending-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align:center;">Fav</th>
+                                    <th>Bill Name</th>
+                                    <th>Category</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th style="width: 150px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected via script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Paid Bills Table -->
+                <div class="table-card">
+                    <div class="table-header" style="background-color:rgba(16,185,129,0.03);">
+                        <div class="table-title">
+                            <h3 style="color:var(--text-primary);"><i class="fas fa-check-circle" style="margin-right:8px; color:var(--color-success);"></i>Paid Bills List</h3>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="bills-paid-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align:center;">Fav</th>
+                                    <th>Bill Name</th>
+                                    <th>Category</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Payment Date</th>
+                                    <th style="width: 150px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected via script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 4. CREDIT CARDS & LOANS VIEW
+                 ========================================== -->
+            <section id="liabilities-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <h2 style="font-size:1.6rem; font-weight:700;">Credit Cards, Loans & EMIs</h2>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Manage long-term recurring liabilities. Check outstanding totals below.</p>
+                    </div>
+                    <button class="btn btn-primary" id="liability-add-btn"><i class="fas fa-plus"></i> Add Liability</button>
+                </div>
+
+                <!-- Mini stats overview -->
+                <div class="stat-cards-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:28px;">
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Total Credit Cards</span>
+                        <div class="stat-card-value" id="liab-cc-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Total Loans Outstanding</span>
+                        <div class="stat-card-value" id="liab-loan-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Total EMI Commitments</span>
+                        <div class="stat-card-value" id="liab-emi-total" style="font-size: 1.4rem; margin-top:4px;">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Filter / Sort controls -->
+                <div class="filter-bar" style="margin-bottom:24px; grid-template-columns: 2fr 1fr 1fr;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Search liability name</label>
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="liability-filter-search" class="form-control" placeholder="Search...">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Type</label>
+                        <select id="liability-filter-type" class="form-control">
+                            <option value="">All Types</option>
+                            <option value="credit-card">Credit Card</option>
+                            <option value="loan">Loan</option>
+                            <option value="emi">EMI</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Sort By</label>
+                        <select id="liability-filter-sort" class="form-control">
+                            <option value="dueDate-asc">Due Date (Soonest)</option>
+                            <option value="dueDate-desc">Due Date (Latest)</option>
+                            <option value="amount-desc">Amount (Highest)</option>
+                            <option value="amount-asc">Amount (Lowest)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pending Liabilities -->
+                <div class="table-card" style="margin-bottom:28px;">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <h3>Outstanding Liabilities</h3>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="liabilities-pending-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Notes</th>
+                                    <th>Status</th>
+                                    <th style="width: 180px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected via script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Paid History Liabilities -->
+                <div class="table-card">
+                    <div class="table-header" style="background-color:rgba(16,185,129,0.03);">
+                        <div class="table-title">
+                            <h3>Cleared This Month / History</h3>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="liabilities-paid-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Payment Date</th>
+                                    <th>Payment Count</th>
+                                    <th style="width: 100px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected via script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 5. NEXT MONTH VIEW
+                 ========================================== -->
+            <section id="next-month-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <h2 style="font-size:1.6rem; font-weight:700;">Next Month Planning</h2>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Log payments that will fall due next month to keep track of upcoming needs.</p>
+                    </div>
+                    <button class="btn btn-primary" id="next-month-add-btn"><i class="fas fa-plus"></i> Add Next Month Planner</button>
+                </div>
+
+                <div class="filter-bar" style="grid-template-columns: 2fr 1fr; margin-bottom:24px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Search upcoming payments</label>
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="next-month-search" class="form-control" placeholder="Search name...">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Priority</label>
+                        <select id="next-month-filter-priority" class="form-control">
+                            <option value="">All Priorities</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-wrapper">
+                        <table id="next-month-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Estimated Amount</th>
+                                    <th>Expected Due Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th style="width: 260px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Injected via script -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 6. REPORTS VIEW
+                 ========================================== -->
+            <section id="reports-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <h2 style="font-size:1.6rem; font-weight:700;">Reports & Financial Analytics</h2>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">Auto-generated analytics breakdown based on your entries.</p>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn btn-secondary" onclick="window.utils.exportToPDF('FinSync_Report.pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+                    </div>
+                </div>
+
+                <!-- Reports statistics quick look -->
+                <div class="stat-cards-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:28px;">
+                    <div class="stat-card" style="padding:16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem;">Avg Daily Spending</span>
+                        <div class="stat-card-value" id="rep-avg-daily" style="font-size:1.3rem; margin-top:4px;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="padding:16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem;">Biggest Expense Category</span>
+                        <div class="stat-card-value" id="rep-biggest-cat" style="font-size:1.3rem; margin-top:4px; font-weight:700;">N/A</div>
+                    </div>
+                    <div class="stat-card" style="padding:16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem;">Bills Completed Ratio</span>
+                        <div class="stat-card-value" id="rep-bills-ratio" style="font-size:1.3rem; margin-top:4px;">0/0</div>
+                    </div>
+                    <div class="stat-card" style="padding:16px;">
+                        <span style="color:var(--text-secondary); font-size:0.75rem;">Current Year Total Spend</span>
+                        <div class="stat-card-value" id="rep-year-total" style="font-size:1.3rem; margin-top:4px;">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h4>Category-wise Spending</h4>
+                        <div class="chart-container">
+                            <canvas id="categoryPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Weekly Spending Trend (Last 7 Days)</h4>
+                        <div class="chart-container">
+                            <canvas id="weeklyLineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid" style="grid-template-columns: 1fr;">
+                    <div class="chart-card" style="height:420px;">
+                        <h4>Monthly Expense Trends (This Year)</h4>
+                        <div class="chart-container" style="height:320px;">
+                            <canvas id="monthlyBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 7. CALENDAR VIEW
+                 ========================================== -->
+            <section id="calendar-view" class="view-section">
+                <div class="calendar-card">
+                    <div class="calendar-header">
+                        <button class="action-btn" id="calendar-prev-month"><i class="fas fa-chevron-left"></i></button>
+                        <h2 id="calendar-month-year" style="font-size: 1.4rem; font-weight:700;">Month Year</h2>
+                        <button class="action-btn" id="calendar-next-month"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <div class="calendar-grid">
+                        <div class="calendar-day-label">Sun</div>
+                        <div class="calendar-day-label">Mon</div>
+                        <div class="calendar-day-label">Tue</div>
+                        <div class="calendar-day-label">Wed</div>
+                        <div class="calendar-day-label">Thu</div>
+                        <div class="calendar-day-label">Fri</div>
+                        <div class="calendar-day-label">Sat</div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendar-days-container" style="margin-top:8px;">
+                        <!-- Grid generated dynamically -->
+                    </div>
+                </div>
+
+                <!--<div class="dashboard-panel" id="calendar-day-events" style="display:none;">
+                    <h3 id="selected-day-title" style="margin-bottom:12px; font-size:1rem; font-weight:700;">Events on Jul 6, 2026</h3>
+                    <ul id="selected-day-events-list" style="list-style:none; display:flex; flex-direction:column; gap:8px;">-->
+                <!-- Events populated on click -->
+                <!--</ul>
+                </div>-->
+            </section>
+
+            <!-- ==========================================
+                 8. SETTINGS VIEW
+                 ========================================== -->
+            <section id="settings-view" class="view-section">
+                <div class="dashboard-grid">
+                    <!-- Left side Settings Panels -->
+                    <div style="display:flex; flex-direction:column; gap:28px;">
+                        <!-- Profile & Budgets -->
+                        <div class="dashboard-panel">
+                            <h3 style="margin-bottom:20px; font-weight:700;"><i class="fas fa-user-cog" style="margin-right:10px; color:var(--accent-color);"></i>Personal Preferences</h3>
+
+                            <div class="form-group">
+                                <label for="settings-username">Profile Display Name</label>
+                                <input type="text" id="settings-username" class="form-control" placeholder="Your Name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-currency">Base Currency</label>
+                                <select id="settings-currency" class="form-control">
+                                    <option value="$">US Dollar ($)</option>
+                                    <option value="₹">Indian Rupee (₹)</option>
+                                    <option value="€">Euro (€)</option>
+                                    <option value="£">Pound Sterling (£)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-monthly-budget">Monthly Spending Budget</label>
+                                <input type="number" id="settings-monthly-budget" class="form-control" min="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-daily-limit">Daily Spending Limit</label>
+                                <input type="number" id="settings-daily-limit" class="form-control" min="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="settings-large-expense">Large Expense Alert Threshold</label>
+                                <input type="number" id="settings-large-expense" class="form-control" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Appearance Settings -->
+                        <div class="dashboard-panel">
+                            <h3 style="margin-bottom:20px; font-weight:700;"><i class="fas fa-palette" style="margin-right:10px; color:var(--accent-color);"></i>Design & Custom Theme</h3>
+
+                            <div class="form-group">
+                                <label>Theme Mode</label>
+                                <select id="settings-theme-select" class="form-control">
+                                    <option value="light">Light Mode</option>
+                                    <option value="dark">Dark Mode</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Accent Highlights Color</label>
+                                <div class="accent-swatches">
+                                    <div class="accent-swatch swatch-indigo" data-accent="indigo" title="Indigo"></div>
+                                    <div class="accent-swatch swatch-emerald" data-accent="emerald" title="Emerald"></div>
+                                    <div class="accent-swatch swatch-violet" data-accent="violet" title="Violet"></div>
+                                    <div class="accent-swatch swatch-rose" data-accent="rose" title="Rose"></div>
+                                    <div class="accent-swatch swatch-amber" data-accent="amber" title="Amber"></div>
+                                    <div class="accent-swatch swatch-sky" data-accent="sky" title="Sky"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Backups & Reset -->
+                        <div class="dashboard-panel">
+                            <h3 style="margin-bottom:20px; font-weight:700;"><i class="fas fa-database" style="margin-right:10px; color:var(--accent-color);"></i>Portability & Data Controls</h3>
+                            <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:16px;">Export your local entries, load standard JSON backups, or reset current state.</p>
+
+                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <button class="btn btn-secondary" id="settings-btn-backup"><i class="fas fa-download"></i> Download Backup JSON</button>
+                                <button class="btn btn-secondary" id="settings-btn-restore-trigger"><i class="fas fa-upload"></i> Restore Backup</button>
+                                <input type="file" id="settings-file-restore" style="display:none;" accept=".json">
+                                <button class="btn btn-danger" id="settings-btn-reset"><i class="fas fa-trash-alt"></i> Reset All Data</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right side: Quick EMI Calculator & Help -->
+                    <div style="display:flex; flex-direction:column; gap:28px;">
+                        <div class="dashboard-panel">
+                            <h3 style="margin-bottom:20px; font-weight:700;"><i class="fas fa-calculator" style="margin-right:10px; color:var(--accent-color);"></i>EMI Installment Calculator</h3>
+
+                            <div class="form-group">
+                                <label for="emi-principal">Loan Amount</label>
+                                <input type="number" id="emi-principal" class="form-control" value="10000">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="emi-interest">Annual Interest Rate (%)</label>
+                                <input type="number" id="emi-interest" class="form-control" value="8.5" step="0.1">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="emi-tenure">Tenure (Months)</label>
+                                <input type="number" id="emi-tenure" class="form-control" value="24">
+                            </div>
+
+                            <button class="btn btn-primary" id="emi-calculate-btn" style="width:100%; justify-content:center;"><i class="fas fa-equals"></i> Calculate</button>
+
+                            <div id="emi-result-panel" style="margin-top:20px; display:none; padding:16px; background-color:var(--bg-primary); border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                    <span style="font-size:0.85rem; color:var(--text-secondary);">Monthly EMI:</span>
+                                    <span id="emi-monthly-val" style="font-weight:700; color:var(--accent-color); font-size:1.05rem;">$0.00</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                    <span style="font-size:0.85rem; color:var(--text-secondary);">Total Interest:</span>
+                                    <span id="emi-interest-val" style="font-weight:600; color:var(--text-primary); font-size:0.95rem;">$0.00</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span style="font-size:0.85rem; color:var(--text-secondary);">Total Payment:</span>
+                                    <span id="emi-total-val" style="font-weight:600; color:var(--text-primary); font-size:0.95rem;">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Help Shortcuts -->
+                        <div class="dashboard-panel">
+                            <h3 style="margin-bottom:12px; font-weight:700;"><i class="fas fa-keyboard" style="margin-right:10px; color:var(--accent-color);"></i>Keyboard Shortcuts</h3>
+                            <ul style="list-style:none; display:flex; flex-direction:column; gap:8px; font-size:0.85rem;">
+                                <li style="display:flex; justify-content:space-between;"><span style="color:var(--text-secondary);">Add New Daily Expense:</span><kbd style="background:var(--bg-primary); border:1px solid var(--border-color); padding:2px 6px; border-radius:4px;">Alt + N</kbd></li>
+                                <li style="display:flex; justify-content:space-between;"><span style="color:var(--text-secondary);">Add Monthly Bill:</span><kbd style="background:var(--bg-primary); border:1px solid var(--border-color); padding:2px 6px; border-radius:4px;">Alt + B</kbd></li>
+                                <li style="display:flex; justify-content:space-between;"><span style="color:var(--text-secondary);">Switch to Dashboard:</span><kbd style="background:var(--bg-primary); border:1px solid var(--border-color); padding:2px 6px; border-radius:4px;">Alt + D</kbd></li>
+                                <li style="display:flex; justify-content:space-between;"><span style="color:var(--text-secondary);">Switch to Expenses:</span><kbd style="background:var(--bg-primary); border:1px solid var(--border-color); padding:2px 6px; border-radius:4px;">Alt + E</kbd></li>
+                            </ul>
+                        </div>
+
+                        <div class="dashboard-panel">
+                            <button class="btn btn-primary" id="dashboard-add-income-btn" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4);"><i class="fas fa-plus"></i> Add Income</button>
+                            <button class="btn btn-primary" id="dashboard-add-more1-btn" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4);"><i class="fas fa-plus"></i> Other</button>
+                            <button class="btn btn-primary" id="dashboard-add-more2-btn" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4);"><i class="fas fa-plus"></i> More</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- QUICK ADD FLOAT BUTTON -->
+    <button id="fab-quick-add" title="Quick Add Daily Expense">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- ==========================================
+         MODAL OVERLAY DIALOGS
+         ========================================== -->
+    <!-- 1. ADD/EDIT DAILY EXPENSE MODAL -->
+    <div class="modal-overlay" id="modal-expense">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-expense-title">Add Expense</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-expense">
+                <input type="hidden" id="expense-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="expense-date">Date *</label>
+                        <input type="date" id="expense-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-category">Category *</label>
+                        <select id="expense-category" class="form-control" required>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Food">Food</option>
+                            <option value="Tea/Coffee">Tea/Coffee</option>
+                            <option value="Grocery">Grocery</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Parking">Parking</option>
+                            <option value="Fuel">Fuel</option>
+                            <option value="Taxi">Taxi</option>
+                            <option value="Office">Office</option>
+                            <option value="Home">Home</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-amount">Amount *</label>
+                        <input type="number" id="expense-amount" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-description">Description *</label>
+                        <input type="text" id="expense-description" class="form-control" required placeholder="e.g. Lunch, Grocery refill">
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-tags">Tags (comma separated)</label>
+                        <input type="text" id="expense-tags" class="form-control" placeholder="e.g. food, office, weekly">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-expense">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. ADD/EDIT MONTHLY BILL MODAL -->
+    <div class="modal-overlay" id="modal-bill">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-bill-title">Add Monthly Bill</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-bill">
+                <input type="hidden" id="bill-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="bill-name">Bill Name *</label>
+                        <input type="text" id="bill-name" class="form-control" required placeholder="e.g. Rent, Internet">
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-category">Category *</label>
+                        <select id="bill-category" class="form-control" required>
+                            <option value="Rent">Rent</option>
+                            <option value="Electricity">Electricity</option>
+                            <option value="Internet">Internet</option>
+                            <option value="Mobile Recharge">Mobile Recharge</option>
+                            <option value="Netflix">Netflix</option>
+                            <option value="Amazon Prime">Amazon Prime</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="School Fees">School Fees</option>
+                            <option value="Water Bill">Water Bill</option>
+                            <option value="Gas">Gas</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Utilities">Utilities</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-amount">Amount *</label>
+                        <input type="number" id="bill-amount" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="bill-due-date">Due Date *</label>
+                        <input type="date" id="bill-due-date" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="bill-auto-repeat" checked style="width:16px; height:16px;">
+                        <label for="bill-auto-repeat" style="margin-bottom:0; cursor:pointer;">Auto Repeat Monthly</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-bill">Save Bill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. ADD/EDIT LIABILITY MODAL -->
+    <div class="modal-overlay" id="modal-liability">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-liability-title">Add Liability</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-liability">
+                <input type="hidden" id="liability-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="liability-name">Name *</label>
+                        <input type="text" id="liability-name" class="form-control" required placeholder="e.g. Car Loan EMI, Visa Card">
+                    </div>
+                    <div class="form-group">
+                        <label for="liability-type">Type *</label>
+                        <select id="liability-type" class="form-control" required>
+                            <option value="credit-card">Credit Card</option>
+                            <option value="loan">Loan</option>
+                            <option value="emi">EMI</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="liability-amount">Amount *</label>
+                        <input type="number" id="liability-amount" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="liability-due-date">Due Date *</label>
+                        <input type="date" id="liability-due-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="liability-notes">Notes (optional)</label>
+                        <textarea id="liability-notes" class="form-control" rows="2" placeholder="Notes or remarks..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-liability">Save Liability</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. ADD/EDIT NEXT MONTH PAYMENT MODAL -->
+    <div class="modal-overlay" id="modal-next-month">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-next-month-title">Add Next Month Payment</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-next-month">
+                <input type="hidden" id="next-month-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="next-month-name">Name *</label>
+                        <input type="text" id="next-month-name" class="form-control" required placeholder="e.g. Gym membership">
+                    </div>
+                    <div class="form-group">
+                        <label for="next-month-amount">Estimated Amount *</label>
+                        <input type="number" id="next-month-amount" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="next-month-due-date">Expected Due Date *</label>
+                        <input type="date" id="next-month-due-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="next-month-priority">Priority *</label>
+                        <select id="next-month-priority" class="form-control" required>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-next-month">Save Planner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. ADD/EDIT INCOME MODAL -->
+    <div class="modal-overlay" id="modal-income">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-income-title">Add Income Source</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-income">
+                <input type="hidden" id="income-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="income-source">Income Source *</label>
+                        <input type="text" id="income-source" class="form-control" required placeholder="e.g. Salary, Dividend">
+                    </div>
+                    <div class="form-group">
+                        <label for="income-amount">Amount *</label>
+                        <input type="number" id="income-amount" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="income-date">Date Received *</label>
+                        <input type="date" id="income-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="income-category">Category *</label>
+                        <select id="income-category" class="form-control" required>
+                            <option value="Salary">Salary</option>
+                            <option value="Freelance">Freelance</option>
+                            <option value="Investments">Investments</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-income">Save Income</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. ADD/EDIT GOAL MODAL -->
+    <div class="modal-overlay" id="modal-goal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-goal-title">Add Savings Goal</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-goal">
+                <input type="hidden" id="goal-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="goal-name">Goal Name *</label>
+                        <input type="text" id="goal-name" class="form-control" required placeholder="e.g. Emergency Fund, New Phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-target">Target Amount *</label>
+                        <input type="number" id="goal-target" class="form-control" min="0.01" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-current">Current Saved Amount</label>
+                        <input type="number" id="goal-current" class="form-control" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="goal-category">Category</label>
+                        <input type="text" id="goal-category" class="form-control" placeholder="e.g. Savings, Gadgets">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-goal">Save Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         JAVASCRIPT SCRIPTS
+         ========================================== -->
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS CDN for Excel exports -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Application Logic Modules -->
+    <script src="storage.js"></script>
+    <script src="utils.js"></script>
+    <script src="charts.js"></script>
+    <script src="script.js"></script>
+    <!--SweetAlert2-->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--Copy Right-->
+    <script>
+        document.getElementById("copyright").innerHTML =
+            `&copy; ${new Date().getFullYear()} VS-Engine. All rights reserved.`;
+    </script>
+</body>
+</html>
