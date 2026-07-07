@@ -298,7 +298,7 @@ class FinSyncApp {
 
     // 3. User display configuration
     if (!settings.username) {
-      settings.username = 'Vishnu'; // default based on app dir metadata
+      settings.username = 'User'; // default based on app dir metadata
       window.storage.updateSettings({ username: 'Vishnu' });
     }
     document.getElementById('settings-username').value = settings.username;
