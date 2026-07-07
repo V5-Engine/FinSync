@@ -304,10 +304,10 @@ class FinSyncApp {
     document.getElementById('settings-username').value = settings.username;
 
     // 4. Form inputs sync
-    document.getElementById('settings-currency').value = settings.currency || '$';
-    document.getElementById('settings-monthly-budget').value = settings.monthlyBudget || 3000;
-    document.getElementById('settings-daily-limit').value = settings.dailyLimit || 100;
-    document.getElementById('settings-large-expense').value = settings.largeExpenseThreshold || 150;
+    document.getElementById('settings-currency').value = settings.currency || '₹';
+    document.getElementById('settings-monthly-budget').value = settings.monthlyBudget || 20000;
+    document.getElementById('settings-daily-limit').value = settings.dailyLimit || 500;
+    document.getElementById('settings-large-expense').value = settings.largeExpenseThreshold || 1000;
 
     // 5. Injects Category Options dynamically
     this.populateCategoryOptions();
