@@ -5,497 +5,572 @@
 const STORAGE_KEY = 'finsync_data_state';
 
 const DEFAULT_STATE = {
-  settings: {
-    currency: '₹',
-    monthlyBudget: 3000,
-    dailyLimit: 100,
-    theme: 'dark',
-    accentColor: 'indigo', // indigo, emerald, violet, rose, amber, sky
-    largeExpenseThreshold: 500
-  },
-  income: [],
-  liabilities: [],
-  bills: [],
-  expenses: [],
-  nextMonth: [],
-  goals: []
+    settings: {
+        currency: '₹',
+        monthlyBudget: 20000,
+        dailyLimit: 500,
+        theme: 'dark',
+        accentColor: 'indigo', // indigo, emerald, violet, rose, amber, sky
+        largeExpenseThreshold: 1000
+    },
+    income: [],
+    liabilities: [],
+    bills: [],
+    expenses: [],
+    nextMonth: [],
+    goals: [],
+    receivable: [],
 };
 
 class FinSyncStorage {
-  constructor() {
-    this.state = this.loadState();
-    this.checkAndResetMonthlyRecurring();
-  }
-
-  /**
-   * Load state from local storage or generate default state
-   */
-  loadState() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (data) {
-        const parsed = JSON.parse(data);
-        // Deep merge with defaults to ensure any new keys/fields exist
-        return {
-          settings: { ...DEFAULT_STATE.settings, ...parsed.settings },
-          income: parsed.income || [],
-          liabilities: parsed.liabilities || [],
-          bills: parsed.bills || [],
-          expenses: parsed.expenses || [],
-          nextMonth: parsed.nextMonth || [],
-          goals: parsed.goals || []
-        };
-      }
-    } catch (e) {
-      console.error('Failed to load FinSync state from LocalStorage:', e);
+    constructor() {
+        this.state = this.loadState();
+        this.checkAndResetMonthlyRecurring();
     }
-    return JSON.parse(JSON.stringify(DEFAULT_STATE)); // Return fresh deep copy of default state
-  }
 
-  /**
-   * Save current state to local storage
-   */
-  saveState() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-      // Dispatch an event so components can update if needed
-      window.dispatchEvent(new CustomEvent('finsync-state-updated', { detail: this.state }));
-    } catch (e) {
-      console.error('Failed to save FinSync state to LocalStorage:', e);
+    /**
+     * Load state from local storage or generate default state
+     */
+    loadState() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                const parsed = JSON.parse(data);
+                // Deep merge with defaults to ensure any new keys/fields exist
+                return {
+                    settings: { ...DEFAULT_STATE.settings, ...parsed.settings },
+                    income: parsed.income || [],
+                    liabilities: parsed.liabilities || [],
+                    bills: parsed.bills || [],
+                    receivable: parsed.receivable || [],
+                    expenses: parsed.expenses || [],
+                    nextMonth: parsed.nextMonth || [],
+                    goals: parsed.goals || []
+                };
+            }
+        } catch (e) {
+            console.error('Failed to load FinSync state from LocalStorage:', e);
+        }
+        return JSON.parse(JSON.stringify(DEFAULT_STATE)); // Return fresh deep copy of default state
     }
-  }
 
-  /**
-   * Checks if we have entered a new calendar month.
-   * If yes, and user has auto-repeat enabled for bills, we reset their paid status
-   * so they show up as pending for the new month, keeping their history.
-   */
-  checkAndResetMonthlyRecurring() {
-    const currentMonthKey = new Date().toISOString().substring(0, 7); // "YYYY-MM"
-    const lastCheckKey = localStorage.getItem('finsync_last_month_check');
-
-    if (lastCheckKey && lastCheckKey !== currentMonthKey) {
-      // It's a new month! Reset bills and liabilities
-      let updated = false;
-
-      // 1. Reset bills
-      this.state.bills.forEach(bill => {
-        if (bill.autoRepeat && bill.paid) {
-          bill.paid = false;
-          bill.paidDate = '';
-          updated = true;
+    /**
+     * Save current state to local storage
+     */
+    saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+            // Dispatch an event so components can update if needed
+            window.dispatchEvent(new CustomEvent('finsync-state-updated', { detail: this.state }));
+        } catch (e) {
+            console.error('Failed to save FinSync state to LocalStorage:', e);
         }
-      });
+    }
 
-      // 2. Reset liabilities (Credit Cards / EMIs / Loans status)
-      // Usually, liabilities reset every cycle. Let's reset their payment status for the new month.
-      this.state.liabilities.forEach(liab => {
-        if (liab.paid) {
-          // If it was paid, keep it in history but clear payment status for the new cycle
-          liab.paid = false;
-          liab.paidDate = '';
-          updated = true;
+    /**
+     * Checks if we have entered a new calendar month.
+     * If yes, and user has auto-repeat enabled for bills, we reset their paid status
+     * so they show up as pending for the new month, keeping their history.
+     */
+    checkAndResetMonthlyRecurring() {
+        const currentMonthKey = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+        const lastCheckKey = localStorage.getItem('finsync_last_month_check');
+
+        if (lastCheckKey && lastCheckKey !== currentMonthKey) {
+            // It's a new month! Reset bills and liabilities
+            let updated = false;
+
+            // 1. Reset bills
+            this.state.bills.forEach(bill => {
+                if (bill.autoRepeat && bill.paid) {
+                    bill.paid = false;
+                    bill.paidDate = '';
+                    updated = true;
+                }
+            });
+
+            // 2. Reset liabilities (Credit Cards / EMIs / Loans status)
+            // Usually, liabilities reset every cycle. Let's reset their payment status for the new month.
+            this.state.liabilities.forEach(liab => {
+                if (liab.paid) {
+                    // If it was paid, keep it in history but clear payment status for the new cycle
+                    liab.paid = false;
+                    liab.paidDate = '';
+                    updated = true;
+                }
+            });
+
+            // If we made changes, save them
+            if (updated) {
+                this.saveState();
+            }
         }
-      });
+        localStorage.setItem('finsync_last_month_check', currentMonthKey);
+    }
 
-      // If we made changes, save them
-      if (updated) {
+    // --- SETTINGS CONTROLLER ---
+    getSettings() {
+        return this.state.settings;
+    }
+
+    updateSettings(newSettings) {
+        this.state.settings = { ...this.state.settings, ...newSettings };
         this.saveState();
-      }
     }
-    localStorage.setItem('finsync_last_month_check', currentMonthKey);
-  }
 
-  // --- SETTINGS CONTROLLER ---
-  getSettings() {
-    return this.state.settings;
-  }
-
-  updateSettings(newSettings) {
-    this.state.settings = { ...this.state.settings, ...newSettings };
-    this.saveState();
-  }
-
-  // --- INCOME CONTROLLER ---
-  getIncome() {
-    return this.state.income;
-  }
-
-  addIncome(item) {
-    const newIncome = {
-      id: 'inc-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      source: item.source,
-      amount: parseFloat(item.amount) || 0,
-      date: item.date || new Date().toISOString().split('T')[0],
-      category: item.category || 'Other'
-    };
-    this.state.income.push(newIncome);
-    this.saveState();
-    return newIncome;
-  }
-
-  editIncome(id, updatedItem) {
-    const index = this.state.income.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.income[index] = {
-        ...this.state.income[index],
-        source: updatedItem.source,
-        amount: parseFloat(updatedItem.amount) || 0,
-        date: updatedItem.date,
-        category: updatedItem.category
-      };
-      this.saveState();
-      return true;
+    // --- INCOME CONTROLLER ---
+    getIncome() {
+        return this.state.income;
     }
-    return false;
-  }
 
-  deleteIncome(id) {
-    const originalLength = this.state.income.length;
-    this.state.income = this.state.income.filter(item => item.id !== id);
-    if (this.state.income.length !== originalLength) {
-      this.saveState();
-      return true;
+    addIncome(item) {
+        const newIncome = {
+            id: 'inc-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            source: item.source,
+            amount: parseFloat(item.amount) || 0,
+            date: item.date || new Date().toISOString().split('T')[0],
+            category: item.category || 'Other',
+            linkedReceivableId: item.linkedReceivableId || null
+        };
+        this.state.income.push(newIncome);
+        this.saveState();
+        return newIncome;
     }
-    return false;
-  }
 
-  // --- LIABILITIES CONTROLLER ---
-  getLiabilities() {
-    return this.state.liabilities;
-  }
-
-  addLiability(item) {
-    const newItem = {
-      id: 'liab-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      name: item.name,
-      type: item.type, // 'credit-card', 'loan', 'emi'
-      amount: parseFloat(item.amount) || 0,
-      dueDate: item.dueDate,
-      notes: item.notes || '',
-      paid: false,
-      paidDate: '',
-      history: []
-    };
-    this.state.liabilities.push(newItem);
-    this.saveState();
-    return newItem;
-  }
-
-  editLiability(id, updatedItem) {
-    const index = this.state.liabilities.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.liabilities[index] = {
-        ...this.state.liabilities[index],
-        name: updatedItem.name,
-        type: updatedItem.type,
-        amount: parseFloat(updatedItem.amount) || 0,
-        dueDate: updatedItem.dueDate,
-        notes: updatedItem.notes || ''
-      };
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  deleteLiability(id) {
-    this.state.liabilities = this.state.liabilities.filter(item => item.id !== id);
-    // Cleanup any linked expenses
-    this.state.expenses = this.state.expenses.filter(e => e.linkedLiabilityId !== id);
-    this.saveState();
-  }
-
-  markLiabilityPaid(id, paymentDate) {
-    const item = this.state.liabilities.find(item => item.id === id);
-    if (item) {
-      const pDate = paymentDate || new Date().toISOString().split('T')[0];
-      item.paid = true;
-      item.paidDate = pDate;
-      if (!item.history) item.history = [];
-      item.history.push({ date: pDate, amount: item.amount });
-
-      // Prevent duplicate logging of this liability payment
-      const exists = this.state.expenses.some(e => e.linkedLiabilityId === id && e.date === pDate);
-      if (!exists) {
-        this.addExpense({
-          date: pDate,
-          category: item.type === 'credit-card' ? 'Shopping' : (item.type === 'loan' ? 'Home' : 'Others'),
-          amount: item.amount,
-          description: `Liability Payment: ${item.name} (${item.type.toUpperCase()})`,
-          tags: ['Liability', item.type],
-          linkedLiabilityId: item.id
-        });
-      }
-
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  // --- MONTHLY BILLS CONTROLLER ---
-  getBills() {
-    return this.state.bills;
-  }
-
-  addBill(item) {
-    const newItem = {
-      id: 'bill-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      name: item.name,
-      amount: parseFloat(item.amount) || 0,
-      dueDate: item.dueDate,
-      category: item.category || 'Utilities',
-      autoRepeat: !!item.autoRepeat,
-      paid: false,
-      paidDate: '',
-      favorite: false
-    };
-    this.state.bills.push(newItem);
-    this.saveState();
-    return newItem;
-  }
-
-  editBill(id, updatedItem) {
-    const index = this.state.bills.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.bills[index] = {
-        ...this.state.bills[index],
-        name: updatedItem.name,
-        amount: parseFloat(updatedItem.amount) || 0,
-        dueDate: updatedItem.dueDate,
-        category: updatedItem.category,
-        autoRepeat: !!updatedItem.autoRepeat
-      };
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  deleteBill(id) {
-    this.state.bills = this.state.bills.filter(item => item.id !== id);
-    // Cleanup any linked expenses
-    this.state.expenses = this.state.expenses.filter(e => e.linkedBillId !== id);
-    this.saveState();
-  }
-
-  toggleBillPaid(id, isPaid, paymentDate) {
-    const bill = this.state.bills.find(item => item.id === id);
-    if (bill) {
-      bill.paid = isPaid;
-      if (isPaid) {
-        const pDate = paymentDate || new Date().toISOString().split('T')[0];
-        bill.paidDate = pDate;
-
-        // Avoid duplicate logging of this bill payment
-        const exists = this.state.expenses.some(e => e.linkedBillId === id);
-        if (!exists) {
-          this.addExpense({
-            date: pDate,
-            category: bill.category,
-            amount: bill.amount,
-            description: `Bill Payment: ${bill.name}`,
-            tags: ['Bill', bill.category],
-            linkedBillId: bill.id
-          });
+    editIncome(id, updatedItem) {
+        const index = this.state.income.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.income[index] = {
+                ...this.state.income[index],
+                source: updatedItem.source,
+                amount: parseFloat(updatedItem.amount) || 0,
+                date: updatedItem.date,
+                category: updatedItem.category
+            };
+            this.saveState();
+            return true;
         }
-      } else {
-        bill.paidDate = '';
-        // Clean up linked daily expense
+        return false;
+    }
+
+    deleteIncome(id) {
+        const originalLength = this.state.income.length;
+        this.state.income = this.state.income.filter(item => item.id !== id);
+        if (this.state.income.length !== originalLength) {
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    // --- LIABILITIES CONTROLLER ---
+    getLiabilities() {
+        return this.state.liabilities;
+    }
+
+    addLiability(item) {
+        const newItem = {
+            id: 'liab-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            type: item.type, // 'credit-card', 'loan', 'emi'
+            amount: parseFloat(item.amount) || 0,
+            dueDate: item.dueDate,
+            notes: item.notes || '',
+            paid: false,
+            paidDate: '',
+            history: []
+        };
+        this.state.liabilities.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editLiability(id, updatedItem) {
+        const index = this.state.liabilities.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.liabilities[index] = {
+                ...this.state.liabilities[index],
+                name: updatedItem.name,
+                type: updatedItem.type,
+                amount: parseFloat(updatedItem.amount) || 0,
+                dueDate: updatedItem.dueDate,
+                notes: updatedItem.notes || ''
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteLiability(id) {
+        this.state.liabilities = this.state.liabilities.filter(item => item.id !== id);
+        // Cleanup any linked expenses
+        this.state.expenses = this.state.expenses.filter(e => e.linkedLiabilityId !== id);
+        this.saveState();
+    }
+
+    markLiabilityPaid(id, paymentDate) {
+        const item = this.state.liabilities.find(item => item.id === id);
+        if (item) {
+            const pDate = paymentDate || new Date().toISOString().split('T')[0];
+            item.paid = true;
+            item.paidDate = pDate;
+            if (!item.history) item.history = [];
+            item.history.push({ date: pDate, amount: item.amount });
+
+            // Prevent duplicate logging of this liability payment
+            const exists = this.state.expenses.some(e => e.linkedLiabilityId === id && e.date === pDate);
+            if (!exists) {
+                this.addExpense({
+                    date: pDate,
+                    category: item.type === 'credit-card' ? 'Shopping' : (item.type === 'loan' ? 'Home' : 'Others'),
+                    amount: item.amount,
+                    description: `Liability Payment: ${item.name} (${item.type.toUpperCase()})`,
+                    tags: ['Liability', item.type],
+                    linkedLiabilityId: item.id
+                });
+            }
+
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    // --- MONTHLY BILLS CONTROLLER ---
+    getBills() {
+        return this.state.bills;
+    }
+
+    addBill(item) {
+        const newItem = {
+            id: 'bill-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            amount: parseFloat(item.amount) || 0,
+            dueDate: item.dueDate,
+            category: item.category || 'Utilities',
+            autoRepeat: !!item.autoRepeat,
+            paid: false,
+            paidDate: '',
+            favorite: false
+        };
+        this.state.bills.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editBill(id, updatedItem) {
+        const index = this.state.bills.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.bills[index] = {
+                ...this.state.bills[index],
+                name: updatedItem.name,
+                amount: parseFloat(updatedItem.amount) || 0,
+                dueDate: updatedItem.dueDate,
+                category: updatedItem.category,
+                autoRepeat: !!updatedItem.autoRepeat
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteBill(id) {
+        this.state.bills = this.state.bills.filter(item => item.id !== id);
+        // Cleanup any linked expenses
         this.state.expenses = this.state.expenses.filter(e => e.linkedBillId !== id);
-      }
-      this.saveState();
-      return true;
+        this.saveState();
     }
-    return false;
-  }
 
-  toggleBillFavorite(id) {
-    const bill = this.state.bills.find(item => item.id === id);
-    if (bill) {
-      bill.favorite = !bill.favorite;
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
+    toggleBillPaid(id, isPaid, paymentDate) {
+        const bill = this.state.bills.find(item => item.id === id);
+        if (bill) {
+            bill.paid = isPaid;
+            if (isPaid) {
+                const pDate = paymentDate || new Date().toISOString().split('T')[0];
+                bill.paidDate = pDate;
 
-  // --- DAILY EXPENSES CONTROLLER ---
-  getExpenses() {
-    return this.state.expenses;
-  }
-
-  addExpense(item) {
-    const newItem = {
-      id: 'exp-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      date: item.date || new Date().toISOString().split('T')[0],
-      category: item.category || 'Others',
-      amount: parseFloat(item.amount) || 0,
-      description: item.description || '',
-      tags: Array.isArray(item.tags) ? item.tags : (item.tags ? item.tags.split(',').map(t => t.trim()) : []),
-      linkedBillId: item.linkedBillId || null,
-      linkedLiabilityId: item.linkedLiabilityId || null
-    };
-    this.state.expenses.push(newItem);
-    this.saveState();
-    return newItem;
-  }
-
-  editExpense(id, updatedItem) {
-    const index = this.state.expenses.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.expenses[index] = {
-        ...this.state.expenses[index],
-        date: updatedItem.date,
-        category: updatedItem.category,
-        amount: parseFloat(updatedItem.amount) || 0,
-        description: updatedItem.description || '',
-        tags: Array.isArray(updatedItem.tags) ? updatedItem.tags : (updatedItem.tags ? updatedItem.tags.split(',').map(t => t.trim()) : [])
-      };
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  deleteExpense(id) {
-    this.state.expenses = this.state.expenses.filter(item => item.id !== id);
-    this.saveState();
-  }
-
-  // --- NEXT MONTH PAYMENTS CONTROLLER ---
-  getNextMonth() {
-    return this.state.nextMonth;
-  }
-
-  addNextMonth(item) {
-    const newItem = {
-      id: 'nm-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      name: item.name,
-      amount: parseFloat(item.amount) || 0,
-      dueDate: item.dueDate,
-      priority: item.priority || 'medium', // 'high', 'medium', 'low'
-      completed: false
-    };
-    this.state.nextMonth.push(newItem);
-    this.saveState();
-    return newItem;
-  }
-
-  editNextMonth(id, updatedItem) {
-    const index = this.state.nextMonth.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.nextMonth[index] = {
-        ...this.state.nextMonth[index],
-        name: updatedItem.name,
-        amount: parseFloat(updatedItem.amount) || 0,
-        dueDate: updatedItem.dueDate,
-        priority: updatedItem.priority
-      };
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  deleteNextMonth(id) {
-    this.state.nextMonth = this.state.nextMonth.filter(item => item.id !== id);
-    this.saveState();
-  }
-
-  toggleNextMonthCompleted(id, completed) {
-    const item = this.state.nextMonth.find(item => item.id === id);
-    if (item) {
-      item.completed = completed;
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  carryForwardNextMonth(id) {
-    const item = this.state.nextMonth.find(item => item.id === id);
-    if (item) {
-      // Transfer to Monthly Bills
-      this.addBill({
-        name: item.name,
-        amount: item.amount,
-        dueDate: item.dueDate,
-        category: 'Utilities',
-        autoRepeat: true
-      });
-      // Delete from next month planning
-      this.deleteNextMonth(id);
-      return true;
-    }
-    return false;
-  }
-
-  // --- GOALS CONTROLLER ---
-  getGoals() {
-    return this.state.goals;
-  }
-
-  addGoal(item) {
-    const newItem = {
-      id: 'goal-' + Date.now() + Math.random().toString(36).substr(2, 4),
-      name: item.name,
-      target: parseFloat(item.target) || 0,
-      current: parseFloat(item.current) || 0,
-      category: item.category || 'Savings'
-    };
-    this.state.goals.push(newItem);
-    this.saveState();
-    return newItem;
-  }
-
-  editGoal(id, updatedItem) {
-    const index = this.state.goals.findIndex(item => item.id === id);
-    if (index !== -1) {
-      this.state.goals[index] = {
-        ...this.state.goals[index],
-        name: updatedItem.name,
-        target: parseFloat(updatedItem.target) || 0,
-        current: parseFloat(updatedItem.current) || 0,
-        category: updatedItem.category
-      };
-      this.saveState();
-      return true;
-    }
-    return false;
-  }
-
-  deleteGoal(id) {
-    this.state.goals = this.state.goals.filter(item => item.id !== id);
-    this.saveState();
-  }
-
-  // --- BACKUP & RESTORE ---
-  exportBackup() {
-    return JSON.stringify(this.state, null, 2);
-  }
-
-  restoreBackup(jsonString) {
-    try {
-      const parsed = JSON.parse(jsonString);
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.settings && Array.isArray(parsed.expenses) && Array.isArray(parsed.bills)) {
-          this.state = parsed;
-          this.saveState();
-          return { success: true };
+                // Avoid duplicate logging of this bill payment
+                const exists = this.state.expenses.some(e => e.linkedBillId === id);
+                if (!exists) {
+                    this.addExpense({
+                        date: pDate,
+                        category: bill.category,
+                        amount: bill.amount,
+                        description: `Bill Payment: ${bill.name}`,
+                        tags: ['Bill', bill.category],
+                        linkedBillId: bill.id
+                    });
+                }
+            } else {
+                bill.paidDate = '';
+                // Clean up linked daily expense
+                this.state.expenses = this.state.expenses.filter(e => e.linkedBillId !== id);
+            }
+            this.saveState();
+            return true;
         }
-      }
-      return { success: false, error: 'Invalid file format. State structure is invalid.' };
-    } catch (e) {
-      return { success: false, error: e.message };
+        return false;
     }
-  }
 
-  resetAllData() {
-    this.state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-    this.saveState();
-  }
+    toggleBillFavorite(id) {
+        const bill = this.state.bills.find(item => item.id === id);
+        if (bill) {
+            bill.favorite = !bill.favorite;
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+
+    // --- Amount Receivable ---
+    getReceivable() {
+        return this.state.receivable;
+    }
+
+    addReceivable(item) {
+        const newItem = {
+            id: 'bill-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            amount: parseFloat(item.amount) || 0,
+            category: item.category || 'Utilities',
+            received: false,
+            receivedDate: ''
+        };
+        this.state.receivable.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editReceivable(id, updatedItem) {
+        const index = this.state.receivable.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.receivable[index] = {
+                ...this.state.receivable[index],
+                name: updatedItem.name,
+                amount: parseFloat(updatedItem.amount) || 0,
+                category: updatedItem.category,
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteReceivable(id) {
+        this.state.receivable = this.state.receivable.filter(item => item.id !== id);
+        // Cleanup any linked expenses
+        this.state.income = this.state.income.filter(e => e.linkedReceivableId !== id);
+        this.saveState();
+    }
+
+    toggleReceivablePaid(id, isPaid, paymentDate) {
+        const receivable = this.state.receivable.find(item => item.id === id);
+        if (receivable) {
+            receivable.received = isPaid;
+            if (isPaid) {
+                const pDate = new Date().toISOString().split('T')[0];
+                receivable.receivedDate = pDate;
+
+                // Avoid duplicate logging of this bill payment
+                const exists = this.state.income.some(e => e.linkedReceivableId === id);
+                if (!exists) {
+                    this.addIncome({
+                        id: 'inc-' + Date.now() + Math.random().toString(36).substr(2, 4),
+                        source: receivable.name,
+                        amount: receivable.amount,
+                        date: pDate,
+                        category: receivable.category || 'Other',
+                        linkedReceivableId: receivable.id
+                    });
+                }
+            } else {
+                receivable.receivedDate = '';
+                // Clean up linked daily expense
+                this.state.income = this.state.income.filter(e => e.linkedReceivableId !== id);
+            }
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+    // --- DAILY EXPENSES CONTROLLER ---
+    getExpenses() {
+        return this.state.expenses;
+    }
+
+    addExpense(item) {
+        const newItem = {
+            id: 'exp-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            date: item.date || new Date().toISOString().split('T')[0],
+            category: item.category || 'Others',
+            amount: parseFloat(item.amount) || 0,
+            description: item.description || '',
+            tags: Array.isArray(item.tags) ? item.tags : (item.tags ? item.tags.split(',').map(t => t.trim()) : []),
+            linkedBillId: item.linkedBillId || null,
+            linkedLiabilityId: item.linkedLiabilityId || null
+        };
+        this.state.expenses.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editExpense(id, updatedItem) {
+        const index = this.state.expenses.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.expenses[index] = {
+                ...this.state.expenses[index],
+                date: updatedItem.date,
+                category: updatedItem.category,
+                amount: parseFloat(updatedItem.amount) || 0,
+                description: updatedItem.description || '',
+                tags: Array.isArray(updatedItem.tags) ? updatedItem.tags : (updatedItem.tags ? updatedItem.tags.split(',').map(t => t.trim()) : [])
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteExpense(id) {
+        this.state.expenses = this.state.expenses.filter(item => item.id !== id);
+        this.saveState();
+    }
+
+    // --- NEXT MONTH PAYMENTS CONTROLLER ---
+    getNextMonth() {
+        return this.state.nextMonth;
+    }
+
+    addNextMonth(item) {
+        const newItem = {
+            id: 'nm-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            amount: parseFloat(item.amount) || 0,
+            dueDate: item.dueDate,
+            priority: item.priority || 'medium', // 'high', 'medium', 'low'
+            completed: false
+        };
+        this.state.nextMonth.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editNextMonth(id, updatedItem) {
+        const index = this.state.nextMonth.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.nextMonth[index] = {
+                ...this.state.nextMonth[index],
+                name: updatedItem.name,
+                amount: parseFloat(updatedItem.amount) || 0,
+                dueDate: updatedItem.dueDate,
+                priority: updatedItem.priority
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteNextMonth(id) {
+        this.state.nextMonth = this.state.nextMonth.filter(item => item.id !== id);
+        this.saveState();
+    }
+
+    toggleNextMonthCompleted(id, completed) {
+        const item = this.state.nextMonth.find(item => item.id === id);
+        if (item) {
+            item.completed = completed;
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    carryForwardNextMonth(id) {
+        const item = this.state.nextMonth.find(item => item.id === id);
+        if (item) {
+            // Transfer to Monthly Bills
+            this.addBill({
+                name: item.name,
+                amount: item.amount,
+                dueDate: item.dueDate,
+                category: 'Utilities',
+                autoRepeat: true
+            });
+            // Delete from next month planning
+            this.deleteNextMonth(id);
+            return true;
+        }
+        return false;
+    }
+
+    // --- GOALS CONTROLLER ---
+    getGoals() {
+        return this.state.goals;
+    }
+
+    addGoal(item) {
+        const newItem = {
+            id: 'goal-' + Date.now() + Math.random().toString(36).substr(2, 4),
+            name: item.name,
+            target: parseFloat(item.target) || 0,
+            current: parseFloat(item.current) || 0,
+            category: item.category || 'Savings'
+        };
+        this.state.goals.push(newItem);
+        this.saveState();
+        return newItem;
+    }
+
+    editGoal(id, updatedItem) {
+        const index = this.state.goals.findIndex(item => item.id === id);
+        if (index !== -1) {
+            this.state.goals[index] = {
+                ...this.state.goals[index],
+                name: updatedItem.name,
+                target: parseFloat(updatedItem.target) || 0,
+                current: parseFloat(updatedItem.current) || 0,
+                category: updatedItem.category
+            };
+            this.saveState();
+            return true;
+        }
+        return false;
+    }
+
+    deleteGoal(id) {
+        this.state.goals = this.state.goals.filter(item => item.id !== id);
+        this.saveState();
+    }
+
+    // --- BACKUP & RESTORE ---
+    exportBackup() {
+        return JSON.stringify(this.state, null, 2);
+    }
+
+    restoreBackup(jsonString) {
+        try {
+            const parsed = JSON.parse(jsonString);
+            if (parsed && typeof parsed === 'object') {
+                if (parsed.settings && Array.isArray(parsed.expenses) && Array.isArray(parsed.bills)) {
+                    this.state = parsed;
+                    this.saveState();
+                    return { success: true };
+                }
+            }
+            return { success: false, error: 'Invalid file format. State structure is invalid.' };
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    }
+
+    resetAllData() {
+        this.state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        this.saveState();
+    }
 }
 
 // Export a single instance to be used globally
