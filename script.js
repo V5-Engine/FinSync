@@ -33,6 +33,7 @@ class FinSyncApp {
     this.modals = {
       expense: document.getElementById('modal-expense'),
       bill: document.getElementById('modal-bill'),
+      receivable: document.getElementById('modal-receivable'),
       liability: document.getElementById('modal-liability'),
       nextMonth: document.getElementById('modal-next-month'),
       income: document.getElementById('modal-income'),
@@ -43,6 +44,7 @@ class FinSyncApp {
     this.forms = {
       expense: document.getElementById('form-expense'),
       bill: document.getElementById('form-bill'),
+      receivable: document.getElementById('form-receivable'),
       liability: document.getElementById('form-liability'),
       nextMonth: document.getElementById('form-next-month'),
       income: document.getElementById('form-income'),
@@ -163,12 +165,14 @@ class FinSyncApp {
     // View specific actions
     document.getElementById('expense-add-btn').addEventListener('click', () => this.openModal('expense'));
     document.getElementById('bill-add-btn').addEventListener('click', () => this.openModal('bill'));
+    document.getElementById('receivable-add-btn').addEventListener('click', () => this.openModal('receivable'));
     document.getElementById('liability-add-btn').addEventListener('click', () => this.openModal('liability'));
     document.getElementById('next-month-add-btn').addEventListener('click', () => this.openModal('next-month'));
 
     // Forms submission handlers
     this.forms.expense.addEventListener('submit', (e) => this.handleExpenseSubmit(e));
     this.forms.bill.addEventListener('submit', (e) => this.handleBillSubmit(e));
+    this.forms.receivable.addEventListener('submit', (e) => this.handleReceivableSubmit(e));
     this.forms.liability.addEventListener('submit', (e) => this.handleLiabilitySubmit(e));
     this.forms.nextMonth.addEventListener('submit', (e) => this.handleNextMonthSubmit(e));
     this.forms.income.addEventListener('submit', (e) => this.handleIncomeSubmit(e));
@@ -298,16 +302,16 @@ class FinSyncApp {
 
     // 3. User display configuration
     if (!settings.username) {
-      settings.username = 'User'; // default based on app dir metadata
+      settings.username = 'Vishnu'; // default based on app dir metadata
       window.storage.updateSettings({ username: 'Vishnu' });
     }
     document.getElementById('settings-username').value = settings.username;
 
     // 4. Form inputs sync
-    document.getElementById('settings-currency').value = settings.currency || '₹';
-    document.getElementById('settings-monthly-budget').value = settings.monthlyBudget || 20000;
-    document.getElementById('settings-daily-limit').value = settings.dailyLimit || 500;
-    document.getElementById('settings-large-expense').value = settings.largeExpenseThreshold || 1000;
+    document.getElementById('settings-currency').value = settings.currency || '$';
+    document.getElementById('settings-monthly-budget').value = settings.monthlyBudget || 3000;
+    document.getElementById('settings-daily-limit').value = settings.dailyLimit || 100;
+    document.getElementById('settings-large-expense').value = settings.largeExpenseThreshold || 150;
 
     // 5. Injects Category Options dynamically
     this.populateCategoryOptions();
@@ -364,6 +368,8 @@ class FinSyncApp {
       this.renderExpensesView();
     } else if (viewId === 'bills') {
       this.renderBillsView();
+    } else if (viewId === 'receivable') {
+        this.renderReceivableView();
     } else if (viewId === 'liabilities') {
       this.renderLiabilitiesView();
     } else if (viewId === 'next-month') {
@@ -810,6 +816,67 @@ class FinSyncApp {
     }
   }
 
+    /**
+    * Render Amount Lent View
+    */
+    renderReceivableView() {
+        const currency = window.storage.getSettings().currency;
+        const receivable = window.storage.getReceivable();
+
+        const pendingBody = document.querySelector('#receivable-pending-table tbody');
+        const paidBody = document.querySelector('#receivable-paid-table tbody');
+
+        pendingBody.innerHTML = '';
+        paidBody.innerHTML = '';
+
+        const pendingBills = receivable.filter(b => !b.received);
+        const paidBills = receivable.filter(b => b.received);
+
+        // Render Pending
+        if (pendingBills.length === 0) {
+            pendingBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">All bills cleared! No pending bills.</td></tr>';
+        } else {
+            pendingBills.forEach(bill => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+         
+          <td data-label="Bill Name" style="font-weight:600;">${bill.name}</td>
+          <td data-label="Category"><span class="badge bg-info-light">${bill.category}</span></td>
+          <td data-label="Amount" style="font-weight:700; color:var(--color-danger);">${window.utils.formatCurrency(bill.amount, currency)}</td>
+          <td data-label="Status"><span class="badge badge-warning">Pending</span></td>
+          <td data-label="Actions" style="text-align:center; display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-primary" onclick="window.script.markReceivablePaidPrompt('${bill.id}')" style="padding:4px 8px; font-size:0.75rem;"><i class="fas fa-check"></i> Received</button>
+            <button class="action-btn btn-edit" onclick="window.script.editReceivablePrompt('${bill.id}')"><i class="fas fa-edit"></i></button>
+            <button class="action-btn btn-delete" onclick="window.script.deleteReceivablePrompt('${bill.id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        `;
+                pendingBody.appendChild(row);
+            });
+        }
+
+        // Render Paid
+        if (paidBills.length === 0) {
+            paidBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">No bills paid this month yet.</td></tr>';
+        } else {
+            paidBills.forEach(bill => {
+                const row = document.createElement('tr');
+                row.className = 'row-strike';
+                row.innerHTML = `
+         
+          <td data-label="Bill Name" style="font-weight:600;">${bill.name}</td>
+          <td data-label="Category"><span class="badge bg-success-light">${bill.category}</span></td>
+          <td data-label="Amount" style="font-weight:700; color:var(--text-muted);">${window.utils.formatCurrency(bill.amount, currency)}</td>
+          <td data-label="Payment Date" style="color:var(--color-success); font-weight:600;"><i class="fas fa-check" style="margin-right:4px;"></i>${window.utils.formatDate(bill.receivedDate)}</td>
+          <td data-label="Actions" style="text-align:center; display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-secondary" onclick="window.script.toggleReceivedPaidState('${bill.id}', false)" style="padding:4px 8px; font-size:0.75rem;"><i class="fas fa-undo"></i> Unreceived</button>
+            <button class="action-btn btn-delete" onclick="window.script.deleteReceivablePrompt('${bill.id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        `;
+                paidBody.appendChild(row);
+            });
+        }
+    }
+
   /**
    * Render Credit Cards & Loans View
    */
@@ -1236,6 +1303,7 @@ class FinSyncApp {
       if (id) {
         if (modalKey === 'expense') this.fillExpenseEdit(id);
         else if (modalKey === 'bill') this.fillBillEdit(id);
+        else if (modalKey === 'receivable') this.fillReceivableEdit(id);
         else if (modalKey === 'liability') this.fillLiabilityEdit(id);
         else if (modalKey === 'next-month') this.fillNextMonthEdit(id);
         else if (modalKey === 'goal') this.fillGoalEdit(id);
@@ -1340,16 +1408,35 @@ class FinSyncApp {
     this.refreshAllViews();
   }
 
-  fillBillEdit(id) {
-    const bill = window.storage.getBills().find(b => b.id === id);
-    if (bill) {
-      document.getElementById('modal-bill-title').innerText = 'Edit Monthly Bill';
-      document.getElementById('bill-id').value = bill.id;
-      document.getElementById('bill-name').value = bill.name;
-      document.getElementById('bill-category').value = bill.category;
-      document.getElementById('bill-amount').value = bill.amount;
-      document.getElementById('bill-due-date').value = bill.dueDate;
-      document.getElementById('bill-auto-repeat').checked = bill.autoRepeat;
+  // --- Receivables Forms ---
+  handleReceivableSubmit(e) {
+    e.preventDefault();
+        const id = document.getElementById('receivable-id').value;
+    const data = {
+        name: document.getElementById('receivable-name').value,
+        category: document.getElementById('receivable-category').value,
+        amount: document.getElementById('receivable-amount').value,
+    };
+
+    if (id) {
+      window.storage.editReceivable(id, data);
+      window.utils.showToast('Bill updated successfully', 'success');
+    } else {
+      window.storage.addReceivable(data);
+      window.utils.showToast('Receivable Amount registered', 'success');
+    }
+    this.closeAllModals();
+    this.refreshAllViews();
+  }
+
+  fillReceivableEdit(id) {
+    const receivable = window.storage.getReceivable().find(b => b.id === id);
+    if (receivable) {
+      document.getElementById('modal-receivable-title').innerText = 'Edit Amount Receivable';
+      document.getElementById('receivable-id').value = receivable.id;
+      document.getElementById('receivable-name').value = receivable.name;
+      document.getElementById('receivable-category').value = receivable.category;
+      document.getElementById('receivable-amount').value = receivable.amount;
     }
   }
 
@@ -1357,11 +1444,24 @@ class FinSyncApp {
     this.openModal('bill', id);
   }
 
+    editReceivablePrompt(id) {
+        this.openModal('receivable', id);
+    }
+
   async deleteBillPrompt(id) {
     const conf = await window.utils.confirm('Delete Bill', 'Are you sure you want to delete this monthly recurring bill?');
     if (conf) {
       window.storage.deleteBill(id);
       window.utils.showToast('Monthly bill removed', 'success');
+      this.refreshAllViews();
+    }
+  }
+
+  async deleteReceivablePrompt(id) {
+      const conf = await window.utils.confirm('Delete', 'Are you sure you want to delete this Receivable Amount?');
+    if (conf) {
+      window.storage.deleteReceivable(id);
+        window.utils.showToast('Amount Receivable removed', 'success');
       this.refreshAllViews();
     }
   }
@@ -1377,6 +1477,12 @@ class FinSyncApp {
     this.refreshAllViews();
   }
 
+  toggleReceivedPaidState(id, isPaid) {
+    window.storage.toggleReceivablePaid(id, isPaid);
+    window.utils.showToast(isPaid ? 'Amount marked as Paid' : 'Amount marked as Pending', 'success');
+    this.refreshAllViews();
+  }
+
   async markBillPaidPrompt(id) {
     // We can directly mark as paid using today's date
     const todayStr = new Date().toISOString().split('T')[0];
@@ -1384,6 +1490,14 @@ class FinSyncApp {
     window.utils.showToast('Bill paid successfully. Added to Daily Tracker.', 'success');
     this.refreshAllViews();
   }
+
+    async markReceivablePaidPrompt(id) {
+        // We can directly mark as paid using today's date
+        const todayStr = new Date().toISOString().split('T')[0];
+        window.storage.toggleReceivablePaid(id, true, todayStr);
+        window.utils.showToast('Amount has been received successfully. Added to Income Tracker.', 'success');
+        this.refreshAllViews();
+    }
 
   // --- Liabilities Forms ---
   handleLiabilitySubmit(e) {
@@ -1889,6 +2003,7 @@ class FinSyncApp {
     setTimeout(() => {
       let selector = '';
       if (view === 'bills') selector = '#bills-pending-table tbody tr, #bills-paid-table tbody tr';
+      else if (view === 'receivable') selector = '#receivable-pending-table tbody tr, #receivable-paid-table tbody tr';
       else if (view === 'expenses') selector = '#expenses-main-table tbody tr';
       else if (view === 'liabilities') selector = '#liabilities-pending-table tbody tr, #liabilities-paid-table tbody tr';
 
