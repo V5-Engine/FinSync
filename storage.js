@@ -6,47 +6,19 @@ const STORAGE_KEY = 'finsync_data_state';
 
 const DEFAULT_STATE = {
   settings: {
-    currency: '$',
+    currency: '₹',
     monthlyBudget: 3000,
     dailyLimit: 100,
     theme: 'dark',
     accentColor: 'indigo', // indigo, emerald, violet, rose, amber, sky
-    largeExpenseThreshold: 150
+    largeExpenseThreshold: 500
   },
-  income: [
-    { id: 'inc-1', source: 'Salary', amount: 4200, date: '2026-07-01', category: 'Salary' },
-    { id: 'inc-2', source: 'Freelance Design', amount: 850, date: '2026-07-05', category: 'Freelance' }
-  ],
-  liabilities: [
-    { id: 'liab-1', name: 'Chase Sapphire Credit Card', type: 'credit-card', amount: 650, dueDate: '2026-07-15', notes: 'Statement balance', paid: false, paidDate: '', history: [] },
-    { id: 'liab-2', name: 'Car Loan EMI', type: 'loan', amount: 350, dueDate: '2026-07-20', notes: 'Toyota Finance', paid: true, paidDate: '2026-07-02', history: [{ date: '2026-07-02', amount: 350 }] },
-    { id: 'liab-3', name: 'MacBook Installment', type: 'emi', amount: 95, dueDate: '2026-07-10', notes: 'Apple Store 0% APR', paid: false, paidDate: '', history: [] }
-  ],
-  bills: [
-    { id: 'bill-1', name: 'Appartment Rent', amount: 1200, dueDate: '2026-07-01', category: 'Rent', autoRepeat: true, paid: true, paidDate: '2026-07-01', favorite: true },
-    { id: 'bill-2', name: 'Electricity (Power Grid)', amount: 140, dueDate: '2026-07-12', category: 'Electricity', autoRepeat: true, paid: false, paidDate: '', favorite: false },
-    { id: 'bill-3', name: 'High-speed Fiber Internet', amount: 65, dueDate: '2026-07-18', category: 'Internet', autoRepeat: true, paid: false, paidDate: '', favorite: true },
-    { id: 'bill-4', name: 'Netflix Premium', amount: 20, dueDate: '2026-07-08', category: 'Entertainment', autoRepeat: true, paid: true, paidDate: '2026-07-05', favorite: false },
-    { id: 'bill-5', name: 'Geico Car Insurance', amount: 110, dueDate: '2026-07-22', category: 'Insurance', autoRepeat: true, paid: false, paidDate: '', favorite: false }
-  ],
-  expenses: [
-    { id: 'exp-1', date: '2026-07-01', category: 'Home', amount: 1200, description: 'Rent Payment (Bill: Appartment Rent)', tags: ['Bill', 'Rent'] },
-    { id: 'exp-2', date: '2026-07-02', category: 'Home', amount: 350, description: 'Car Loan EMI Payment', tags: ['Loan'] },
-    { id: 'exp-3', date: '2026-07-03', category: 'Grocery', amount: 145.50, description: 'Weekly Groceries at Whole Foods', tags: ['Food'] },
-    { id: 'exp-4', date: '2026-07-04', category: 'Petrol', amount: 50.00, description: 'Gas refill', tags: ['Fuel'] },
-    { id: 'exp-5', date: '2026-07-05', category: 'Tea/Coffee', amount: 8.50, description: 'Starbucks Latte & Croissant', tags: ['Coffee'] },
-    { id: 'exp-6', date: '2026-07-05', category: 'Entertainment', amount: 20.00, description: 'Netflix Premium Subscription', tags: ['Bill', 'Streaming'] },
-    { id: 'exp-7', date: '2026-07-06', category: 'Food', amount: 32.80, description: 'Lunch with colleagues', tags: ['Office'] }
-  ],
-  nextMonth: [
-    { id: 'nm-1', name: 'Quarterly Water Bill', amount: 90, dueDate: '2026-08-04', priority: 'medium', completed: false },
-    { id: 'nm-2', name: 'Annual Domain Hosting Renewal', amount: 180, dueDate: '2026-08-15', priority: 'high', completed: false },
-    { id: 'nm-3', name: 'Spotify Duo Plan', amount: 15, dueDate: '2026-08-01', priority: 'low', completed: false }
-  ],
-  goals: [
-    { id: 'goal-1', name: 'Emergency Savings', target: 10000, current: 6500, category: 'Savings' },
-    { id: 'goal-2', name: 'Japan Travel Fund', target: 4000, current: 1200, category: 'Leisure' }
-  ]
+  income: [],
+  liabilities: [],
+  bills: [],
+  expenses: [],
+  nextMonth: [],
+  goals: []
 };
 
 class FinSyncStorage {
