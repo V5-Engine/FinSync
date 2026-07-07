@@ -296,6 +296,9 @@
                         </div>
                     </div>
                 </div>
+                <div style="text-align:center; color:#888; font-size:14px;">
+                    <p id="copyright"></p>
+                </div>
             </section>
 
             <!-- ==========================================
@@ -1133,5 +1136,10 @@
     <script src="script.js"></script>
     <!--SweetAlert2-->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--Copy Right-->
+    <script>
+        document.getElementById("copyright").innerHTML =
+            `&copy; ${new Date().getFullYear()} VS-Engine. All rights reserved.`;
+    </script>
 </body>
 </html>
